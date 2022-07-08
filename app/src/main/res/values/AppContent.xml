@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="button_firstClick">Start scan</string>
+    <string name="button_secondClick">Scan again</string>
+    <string name="button_copyClick">Copy the list to clipboard</string>
+</resources>
