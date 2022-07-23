@@ -1,16 +1,16 @@
 package com.example.barcodescanner;
 
-import android.app.ListActivity;
-import android.content.ClipData;
-import android.content.ClipboardManager;
 import android.content.Intent;
 import android.os.Bundle;
-import android.widget.ArrayAdapter;
+import android.view.View;
 import android.widget.Button;
 import android.widget.Toast;
 
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.zxing.integration.android.IntentIntegrator;
 import com.google.zxing.integration.android.IntentResult;
@@ -18,56 +18,85 @@ import com.google.zxing.integration.android.IntentResult;
 import java.util.ArrayList;
 import java.util.Locale;
 
-public class MainActivity extends ListActivity {
+public class MainActivity extends AppCompatActivity implements RecyclerViewAdapter.ItemClickListener {
 
     // Initialize variable
-    Button btScan, btCopy;
+    Button btImport, btScan, btCopy;
     ArrayList<String> listItems = new ArrayList<>();
-    ArrayAdapter<String> adapter;
+    RecyclerViewAdapter adapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        // Assign variable
+        InitializeRecycleView();
+
+        // Assign buttons
         btScan = findViewById(R.id.bt_scan);
         btScan.setOnClickListener(view -> ScannerButtonClickEvent());
 
-        btCopy = findViewById(R.id.bt_copyList);
+        btCopy = findViewById(R.id.bt_save);
         btCopy.setEnabled(false);
-        btCopy.setOnClickListener(view -> CopyButtonClickEvent());
+        btCopy.setOnClickListener(view -> SaveButtonClickEvent());
 
-        // Link adapter to ListView
-        adapter = new ArrayAdapter<>(this,
-                android.R.layout.simple_list_item_1,
-                listItems);
-        setListAdapter(adapter);
+        btImport = findViewById(R.id.bt_import);
+        btImport.setOnClickListener(view -> ImportButtonClickEvent());
+
     }
 
-    private void CopyButtonClickEvent() {
-        String result = String.join(" , ", listItems);
-
-        // Save the list content to clipboard
-        ClipboardManager clipboard = (ClipboardManager) getSystemService(CLIPBOARD_SERVICE);
-        ClipData clip = ClipData.newPlainText("label", result);
-        clipboard.setPrimaryClip(clip);
-
-        // Create alert for the user
+    private void ImportButtonClickEvent() {
+        // Create an alert for the user
         AlertDialog.Builder builder = new AlertDialog.Builder(
                 MainActivity.this
         );
-        builder.setTitle("Copy to clipboard");
-        builder.setMessage(String.format(Locale.getDefault(), "Copied %d elements to the clipboard", listItems.size()));
-        builder.setPositiveButton("OK", (dialogInterface, i) -> {
-            // Dismiss dialog
-            dialogInterface.dismiss();
-        });
+
+        builder.setTitle("Import Excel file");
+        builder.setMessage("Shibo... give me more time :)");
+        builder.setPositiveButton("OK", (dialogInterface, i) -> dialogInterface.dismiss());
+
+        builder.show();
+    }
+
+    private void InitializeRecycleView() {
+        // set up the RecyclerView
+        RecyclerView recyclerView = findViewById(R.id.display_barcodes_recycler_view);
+        recyclerView.setLayoutManager(new LinearLayoutManager(this));
+        adapter = new RecyclerViewAdapter(this, listItems);
+        adapter.setClickListener(this);
+        recyclerView.setAdapter(adapter);
+    }
+
+    private void SaveButtonClickEvent() {
+        boolean isExcelGenerated = ExcelUtils.exportDataIntoWorkbook(getApplication(),
+                Constants.EXCEL_FILE_NAME, listItems);
+
+        // Create an alert for the user
+        AlertDialog.Builder builder = new AlertDialog.Builder(
+                MainActivity.this
+        );
+
+        String msg = isExcelGenerated ? String.format(Locale.getDefault(), "Created Excel file with %d elements", listItems.size()) : "Failed to generate file";
+
+        builder.setTitle("Export to excel");
+        builder.setMessage(msg);
+        builder.setPositiveButton("OK", (dialogInterface, i) -> dialogInterface.dismiss());
 
         builder.show();
     }
 
     private void ScannerButtonClickEvent() {
+        //debug
+        /*listItems.add("111");
+        adapter.notifyItemInserted(listItems.size() -1 );
+
+        // after the first scan, update the view
+        if(listItems.size() == 1){
+            findViewById(R.id.display_barcodes_recycler_view).setVisibility(View.VISIBLE);
+            btCopy.setEnabled(true);
+            btScan.setText(R.string.button_secondClick);
+        }*/
+
         // Initialize intent integrator
         IntentIntegrator intentIntegrator = new IntentIntegrator(
                 MainActivity.this
@@ -95,14 +124,22 @@ public class MainActivity extends ListActivity {
         );
 
         if (result.getContents() != null) {
-            adapter.add(result.getContents());
-            btCopy.setEnabled(true);
+            listItems.add(result.getContents());
+            adapter.notifyItemInserted(listItems.size() - 1);
 
-            // Update the button content
-            btScan.setText(R.string.button_secondClick);
-
+            // after the first scan, update the view
+            if (listItems.size() == 1) {
+                findViewById(R.id.display_barcodes_recycler_view).setVisibility(View.VISIBLE);
+                btCopy.setEnabled(true);
+                btScan.setText(R.string.button_secondClick);
+            }
         } else {
             Toast.makeText(getApplicationContext(), "Oops.. Try again", Toast.LENGTH_SHORT).show();
         }
+    }
+
+    @Override
+    public void onItemClick(View view, int position) {
+        Toast.makeText(this, "You clicked " + adapter.getItem(position) + " on row number " + position, Toast.LENGTH_SHORT).show();
     }
 }
