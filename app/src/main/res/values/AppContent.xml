@@ -2,5 +2,6 @@
 <resources>
     <string name="button_firstClick">Start scan</string>
     <string name="button_secondClick">Scan again</string>
-    <string name="button_copyClick">Copy the list to clipboard</string>
+    <string name="button_importSourceFile">Import file</string>
+    <string name="button_save">Export to Excel</string>
 </resources>
