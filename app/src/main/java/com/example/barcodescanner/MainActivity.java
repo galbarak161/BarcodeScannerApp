@@ -164,10 +164,10 @@ public class MainActivity extends AppCompatActivity implements RecyclerViewAdapt
     }
 
     private boolean IsScanValidate(String scanResults) {
-        return true;/*scanResults != null &&
+        return scanResults != null &&
                 scanResults.matches("[0-9]+") &&
                 scanResults.length() == 7 &&
-                scanResults.charAt(0) == '3';*/
+                scanResults.charAt(0) == '3';
     }
 
     private void AlertDialogBuilder(String title, String message, final DialogInterface.OnClickListener positiveClickEvent, boolean showNegativeButton) {
