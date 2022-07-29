@@ -81,7 +81,7 @@ public class MainActivity extends AppCompatActivity implements RecyclerViewAdapt
 
     private void saveListToFile(String fileName) {
         boolean isExcelGenerated = ExcelUtils.exportDataIntoWorkbook(getApplication(),
-                fileName, listItems);
+                fileName + ".xls", listItems);
 
         String message = isExcelGenerated ? String.format(Locale.getDefault(), "Created Excel file with %d elements", listItems.size()) : "Failed to generate file";
         Toast.makeText(this, message, Toast.LENGTH_SHORT).show();
