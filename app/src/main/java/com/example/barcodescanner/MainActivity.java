@@ -3,8 +3,10 @@ package com.example.barcodescanner;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
+import android.text.InputType;
 import android.view.View;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.Toast;
 
 import androidx.annotation.Nullable;
@@ -22,7 +24,7 @@ import java.util.Locale;
 public class MainActivity extends AppCompatActivity implements RecyclerViewAdapter.ItemClickListener {
 
     // Initialize variable
-    Button btImport, btScan, btCopy;
+    Button btImport, btScan, btExport;
     ArrayList<String> listItems = new ArrayList<>();
     RecyclerViewAdapter adapter;
 
@@ -37,9 +39,9 @@ public class MainActivity extends AppCompatActivity implements RecyclerViewAdapt
         btScan = findViewById(R.id.bt_scan);
         btScan.setOnClickListener(view -> ScannerButtonClickEvent());
 
-        btCopy = findViewById(R.id.bt_save);
-        btCopy.setEnabled(false);
-        btCopy.setOnClickListener(view -> saveButtonClickEvent());
+        btExport = findViewById(R.id.bt_save);
+        btExport.setEnabled(false);
+        btExport.setOnClickListener(view -> exportButtonClickEvent());
 
         btImport = findViewById(R.id.bt_import);
         btImport.setOnClickListener(view -> importButtonClickEvent());
@@ -62,29 +64,43 @@ public class MainActivity extends AppCompatActivity implements RecyclerViewAdapt
         AlertDialogBuilder(title, message, (dialogInterface, i) -> dialogInterface.dismiss(), false);
     }
 
-    private void saveButtonClickEvent() {
-        boolean isExcelGenerated = ExcelUtils.exportDataIntoWorkbook(getApplication(),
-                Constants.EXCEL_FILE_NAME, listItems);
-        String title = "Export to excel";
-        String message = isExcelGenerated ? String.format(Locale.getDefault(), "Created Excel file with %d elements", listItems.size()) : "Failed to generate file";
+    private void exportButtonClickEvent() {
+        // Set up the input
+        final EditText input = new EditText(this);
+        input.setInputType(InputType.TYPE_CLASS_TEXT);
 
-        AlertDialogBuilder(title, message, (dialogInterface, i) -> dialogInterface.dismiss(), false);
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Choose file name");
+        builder.setView(input);
+        builder.setPositiveButton("Save", (dialogInterface, i) ->
+                saveListToFile(input.getText().toString()));
+        builder.setNegativeButton("Cancel", (dialogInterface, i) -> dialogInterface.dismiss());
+
+        builder.show();
+    }
+
+    private void saveListToFile(String fileName) {
+        boolean isExcelGenerated = ExcelUtils.exportDataIntoWorkbook(getApplication(),
+                fileName, listItems);
+
+        String message = isExcelGenerated ? String.format(Locale.getDefault(), "Created Excel file with %d elements", listItems.size()) : "Failed to generate file";
+        Toast.makeText(this, message, Toast.LENGTH_SHORT).show();
     }
 
     private void ScannerButtonClickEvent() {
         //debug
-        listItems.add("" + listItems.size() + "");
+        /*listItems.add("" + listItems.size() + "");
         adapter.notifyItemInserted(listItems.size() - 1);
 
         // after the first scan, update the view
         if (listItems.size() == 1) {
             findViewById(R.id.display_barcodes_recycler_view).setVisibility(View.VISIBLE);
-            btCopy.setEnabled(true);
+            btExport.setEnabled(true);
             btScan.setText(R.string.button_secondClick);
-        }
+        }*/
 
         // Initialize intent integrator
-        /*IntentIntegrator intentIntegrator = new IntentIntegrator(
+        IntentIntegrator intentIntegrator = new IntentIntegrator(
                 MainActivity.this
         );
 
@@ -97,7 +113,7 @@ public class MainActivity extends AppCompatActivity implements RecyclerViewAdapt
 
         // Set capture activity and initialize scan
         intentIntegrator.setCaptureActivity(Capture.class);
-        intentIntegrator.initiateScan();*/
+        intentIntegrator.initiateScan();
     }
 
     @Override
@@ -125,7 +141,7 @@ public class MainActivity extends AppCompatActivity implements RecyclerViewAdapt
             // after the first scan, update the view
             if (listItems.size() == 1) {
                 findViewById(R.id.display_barcodes_recycler_view).setVisibility(View.VISIBLE);
-                btCopy.setEnabled(true);
+                btExport.setEnabled(true);
                 btScan.setText(R.string.button_secondClick);
             }
         } else {
@@ -148,10 +164,10 @@ public class MainActivity extends AppCompatActivity implements RecyclerViewAdapt
     }
 
     private boolean IsScanValidate(String scanResults) {
-        return scanResults != null &&
+        return true;/*scanResults != null &&
                 scanResults.matches("[0-9]+") &&
                 scanResults.length() == 7 &&
-                scanResults.charAt(0) == '3';
+                scanResults.charAt(0) == '3';*/
     }
 
     private void AlertDialogBuilder(String title, String message, final DialogInterface.OnClickListener positiveClickEvent, boolean showNegativeButton) {
