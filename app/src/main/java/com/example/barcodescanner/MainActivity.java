@@ -87,7 +87,7 @@ public class MainActivity extends AppCompatActivity implements RecyclerViewAdapt
 
     private void ScannerButtonClickEvent() {
         //debug
-        /*listItems.add("111");
+        /*listItems.add("" + listItems.size() + "");
         adapter.notifyItemInserted(listItems.size() -1 );
 
         // after the first scan, update the view
@@ -125,8 +125,8 @@ public class MainActivity extends AppCompatActivity implements RecyclerViewAdapt
 
         String scanResults = result.getContents();
         if (IsScanValidate(scanResults)) {
-            listItems.add(result.getContents());
-            adapter.notifyItemInserted(listItems.size() - 1);
+            listItems.add(0, result.getContents());
+            adapter.notifyItemInserted(0);
 
             // after the first scan, update the view
             if (listItems.size() == 1) {
@@ -148,6 +148,20 @@ public class MainActivity extends AppCompatActivity implements RecyclerViewAdapt
 
     @Override
     public void onItemClick(View view, int position) {
-        Toast.makeText(this, "You clicked " + adapter.getItem(position) + " on row number " + position, Toast.LENGTH_SHORT).show();
+        // Create an alert for the user
+        AlertDialog.Builder builder = new AlertDialog.Builder(
+                MainActivity.this
+        );
+
+        builder.setTitle("Delete selected barcode");
+        builder.setMessage("Are you sure that you want to delete this item?");
+        builder.setPositiveButton("Yes", (dialogInterface, i) -> {
+            listItems.remove(position);
+            adapter.notifyItemRemoved(position);
+            dialogInterface.dismiss();
+            Toast.makeText(this, "Removed " + adapter.getItem(position) + " on row number " + position, Toast.LENGTH_SHORT).show();
+        });
+        builder.setNegativeButton("No", (dialogInterface, i) -> dialogInterface.dismiss());
+        builder.show();
     }
 }

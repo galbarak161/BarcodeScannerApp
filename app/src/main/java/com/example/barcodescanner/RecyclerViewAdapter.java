@@ -46,18 +46,22 @@ public class RecyclerViewAdapter extends RecyclerView.Adapter<RecyclerViewAdapte
 
 
     // stores and recycles views as they are scrolled off screen
-    public class ViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
+    public class ViewHolder extends RecyclerView.ViewHolder implements View.OnLongClickListener {
         TextView myTextView;
 
         ViewHolder(View itemView) {
             super(itemView);
             myTextView = itemView.findViewById(R.id.barcodeNumber);
-            itemView.setOnClickListener(this);
+            itemView.setOnLongClickListener(this);
         }
 
         @Override
-        public void onClick(View view) {
-            if (mClickListener != null) mClickListener.onItemClick(view, getAdapterPosition());
+        public boolean onLongClick(View view) {
+            if (mClickListener != null) {
+                mClickListener.onItemClick(view, getAdapterPosition());
+                return true;
+            }
+            return false;
         }
     }
 
