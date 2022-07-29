@@ -22,25 +22,28 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintBottom_toTopOf="@id/bt_scan"
+            app:layout_constraintBottom_toTopOf="@id/bt_save"
             app:icon="@drawable/ic_attach_file"
             style="@style/Widget.MaterialComponents.Button.OutlinedButton.Icon"/>
 
+
         <com.google.android.material.button.MaterialButton
-            android:id="@+id/bt_scan"
+            android:id="@+id/bt_save"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
 
-            android:text=  "@string/button_firstClick"
+            android:text=  "@string/button_save"
             android:textStyle="bold"
             android:padding="@dimen/dp_8"
             android:textSize="@dimen/sp_16"
+
 
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toBottomOf="@id/bt_import"
             app:layout_constraintBottom_toTopOf="@id/display_barcodes_recycler_view"
-            app:icon="@drawable/ic_camera"
+
+            app:icon="@drawable/ic_save"
             style="@style/Widget.MaterialComponents.Button.OutlinedButton.Icon"/>
 
         <androidx.recyclerview.widget.RecyclerView
@@ -55,17 +58,16 @@
 
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/bt_scan"
-            app:layout_constraintBottom_toTopOf="@id/bt_save"
-
+            app:layout_constraintTop_toBottomOf="@id/bt_save"
+            app:layout_constraintBottom_toTopOf="@id/bt_scan"
             app:layout_constraintBottom_toBottomOf="parent"/>
 
         <com.google.android.material.button.MaterialButton
-            android:id="@+id/bt_save"
+            android:id="@+id/bt_scan"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
 
-            android:text=  "@string/button_save"
+            android:text=  "@string/button_firstClick"
             android:textStyle="bold"
             android:padding="@dimen/dp_8"
             android:textSize="@dimen/sp_16"
@@ -75,9 +77,8 @@
             app:layout_constraintTop_toBottomOf="@id/display_barcodes_recycler_view"
             app:layout_constraintBottom_toBottomOf="parent"
 
-            app:icon="@drawable/ic_save"
+            app:icon="@drawable/ic_camera"
             style="@style/Widget.MaterialComponents.Button.OutlinedButton.Icon"/>
-
         <!--<com.google.android.material.floatingactionbutton.FloatingActionButton
             android:id="@+id/floating_button_share_excel"
             android:layout_width="wrap_content"
