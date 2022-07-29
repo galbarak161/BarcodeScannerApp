@@ -123,7 +123,8 @@ public class MainActivity extends AppCompatActivity implements RecyclerViewAdapt
                 requestCode, resultCode, data
         );
 
-        if (result.getContents() != null) {
+        String scanResults = result.getContents();
+        if (IsScanValidate(scanResults)) {
             listItems.add(result.getContents());
             adapter.notifyItemInserted(listItems.size() - 1);
 
@@ -136,6 +137,13 @@ public class MainActivity extends AppCompatActivity implements RecyclerViewAdapt
         } else {
             Toast.makeText(getApplicationContext(), "Oops.. Try again", Toast.LENGTH_SHORT).show();
         }
+    }
+
+    private boolean IsScanValidate(String scanResults) {
+        return scanResults != null &&
+                scanResults.matches("[0-9]+") &&
+                scanResults.length() == 7 &&
+                scanResults.charAt(0) == '3';
     }
 
     @Override
