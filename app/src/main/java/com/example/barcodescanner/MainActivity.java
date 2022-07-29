@@ -1,5 +1,6 @@
 package com.example.barcodescanner;
 
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
@@ -30,7 +31,7 @@ public class MainActivity extends AppCompatActivity implements RecyclerViewAdapt
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        InitializeRecycleView();
+        initializeRecycleView();
 
         // Assign buttons
         btScan = findViewById(R.id.bt_scan);
@@ -38,27 +39,14 @@ public class MainActivity extends AppCompatActivity implements RecyclerViewAdapt
 
         btCopy = findViewById(R.id.bt_save);
         btCopy.setEnabled(false);
-        btCopy.setOnClickListener(view -> SaveButtonClickEvent());
+        btCopy.setOnClickListener(view -> saveButtonClickEvent());
 
         btImport = findViewById(R.id.bt_import);
-        btImport.setOnClickListener(view -> ImportButtonClickEvent());
+        btImport.setOnClickListener(view -> importButtonClickEvent());
 
     }
 
-    private void ImportButtonClickEvent() {
-        // Create an alert for the user
-        AlertDialog.Builder builder = new AlertDialog.Builder(
-                MainActivity.this
-        );
-
-        builder.setTitle("Import Excel file");
-        builder.setMessage("Shibo... give me more time :)");
-        builder.setPositiveButton("OK", (dialogInterface, i) -> dialogInterface.dismiss());
-
-        builder.show();
-    }
-
-    private void InitializeRecycleView() {
+    private void initializeRecycleView() {
         // set up the RecyclerView
         RecyclerView recyclerView = findViewById(R.id.display_barcodes_recycler_view);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
@@ -67,38 +55,36 @@ public class MainActivity extends AppCompatActivity implements RecyclerViewAdapt
         recyclerView.setAdapter(adapter);
     }
 
-    private void SaveButtonClickEvent() {
+    private void importButtonClickEvent() {
+        String title = "Import Excel file";
+        String message = "Shibo... give me more time :)";
+
+        AlertDialogBuilder(title, message, (dialogInterface, i) -> dialogInterface.dismiss(), false);
+    }
+
+    private void saveButtonClickEvent() {
         boolean isExcelGenerated = ExcelUtils.exportDataIntoWorkbook(getApplication(),
                 Constants.EXCEL_FILE_NAME, listItems);
+        String title = "Export to excel";
+        String message = isExcelGenerated ? String.format(Locale.getDefault(), "Created Excel file with %d elements", listItems.size()) : "Failed to generate file";
 
-        // Create an alert for the user
-        AlertDialog.Builder builder = new AlertDialog.Builder(
-                MainActivity.this
-        );
-
-        String msg = isExcelGenerated ? String.format(Locale.getDefault(), "Created Excel file with %d elements", listItems.size()) : "Failed to generate file";
-
-        builder.setTitle("Export to excel");
-        builder.setMessage(msg);
-        builder.setPositiveButton("OK", (dialogInterface, i) -> dialogInterface.dismiss());
-
-        builder.show();
+        AlertDialogBuilder(title, message, (dialogInterface, i) -> dialogInterface.dismiss(), false);
     }
 
     private void ScannerButtonClickEvent() {
         //debug
-        /*listItems.add("" + listItems.size() + "");
-        adapter.notifyItemInserted(listItems.size() -1 );
+        listItems.add("" + listItems.size() + "");
+        adapter.notifyItemInserted(listItems.size() - 1);
 
         // after the first scan, update the view
-        if(listItems.size() == 1){
+        if (listItems.size() == 1) {
             findViewById(R.id.display_barcodes_recycler_view).setVisibility(View.VISIBLE);
             btCopy.setEnabled(true);
             btScan.setText(R.string.button_secondClick);
-        }*/
+        }
 
         // Initialize intent integrator
-        IntentIntegrator intentIntegrator = new IntentIntegrator(
+        /*IntentIntegrator intentIntegrator = new IntentIntegrator(
                 MainActivity.this
         );
 
@@ -111,7 +97,7 @@ public class MainActivity extends AppCompatActivity implements RecyclerViewAdapt
 
         // Set capture activity and initialize scan
         intentIntegrator.setCaptureActivity(Capture.class);
-        intentIntegrator.initiateScan();
+        intentIntegrator.initiateScan();*/
     }
 
     @Override
@@ -125,7 +111,15 @@ public class MainActivity extends AppCompatActivity implements RecyclerViewAdapt
 
         String scanResults = result.getContents();
         if (IsScanValidate(scanResults)) {
-            listItems.add(0, result.getContents());
+            if (listItems.contains(scanResults)) {
+                String title = "Scanner Results";
+                String message = "This barcode is already exists in list";
+                AlertDialogBuilder(title, message, (dialogInterface, i) -> dialogInterface.dismiss(), false);
+
+                return;
+            }
+
+            listItems.add(0, scanResults);
             adapter.notifyItemInserted(0);
 
             // after the first scan, update the view
@@ -135,8 +129,22 @@ public class MainActivity extends AppCompatActivity implements RecyclerViewAdapt
                 btScan.setText(R.string.button_secondClick);
             }
         } else {
-            Toast.makeText(getApplicationContext(), "Oops.. Try again", Toast.LENGTH_SHORT).show();
+            String title = "Scanner Results";
+            String message = "Oops.. Try again";
+            AlertDialogBuilder(title, message, (dialogInterface, i) -> dialogInterface.dismiss(), false);
         }
+    }
+
+    @Override
+    public void onItemClick(View view, int position) {
+        String title = "Delete selected barcode";
+        String message = "Are you sure that you want to delete the item: " + adapter.getItem(position) + "?";
+        AlertDialogBuilder(title, message, (dialogInterface, i) -> {
+            listItems.remove(position);
+            adapter.notifyItemRemoved(position);
+            dialogInterface.dismiss();
+            Toast.makeText(this, "Item removed", Toast.LENGTH_SHORT).show();
+        }, true);
     }
 
     private boolean IsScanValidate(String scanResults) {
@@ -146,22 +154,22 @@ public class MainActivity extends AppCompatActivity implements RecyclerViewAdapt
                 scanResults.charAt(0) == '3';
     }
 
-    @Override
-    public void onItemClick(View view, int position) {
+    private void AlertDialogBuilder(String title, String message, final DialogInterface.OnClickListener positiveClickEvent, boolean showNegativeButton) {
         // Create an alert for the user
         AlertDialog.Builder builder = new AlertDialog.Builder(
                 MainActivity.this
         );
 
-        builder.setTitle("Delete selected barcode");
-        builder.setMessage("Are you sure that you want to delete this item?");
-        builder.setPositiveButton("Yes", (dialogInterface, i) -> {
-            listItems.remove(position);
-            adapter.notifyItemRemoved(position);
-            dialogInterface.dismiss();
-            Toast.makeText(this, "Removed " + adapter.getItem(position) + " on row number " + position, Toast.LENGTH_SHORT).show();
-        });
-        builder.setNegativeButton("No", (dialogInterface, i) -> dialogInterface.dismiss());
+        builder.setTitle(title);
+        builder.setMessage(message);
+
+        if (showNegativeButton) {
+            builder.setPositiveButton("Yes", positiveClickEvent);
+            builder.setNegativeButton("No", (dialogInterface, i) -> dialogInterface.dismiss());
+        } else {
+            builder.setPositiveButton("OK", positiveClickEvent);
+        }
+
         builder.show();
     }
 }
