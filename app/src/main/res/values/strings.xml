@@ -1,3 +1,7 @@
 <resources>
     <string name="app_name">Barcode Scanner</string>
+    <string name="button_firstClick">Start scan</string>
+    <string name="button_secondClick">Scan again</string>
+    <string name="button_import">Import</string>
+    <string name="button_export">Export</string>
 </resources>
