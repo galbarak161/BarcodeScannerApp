@@ -1,7 +1,9 @@
 package com.example.barcodescanner;
 
+import android.Manifest;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.text.InputType;
 import android.view.View;
@@ -9,9 +11,11 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -22,6 +26,9 @@ import java.util.ArrayList;
 import java.util.Locale;
 
 public class MainActivity extends AppCompatActivity implements RecyclerViewAdapter.ItemClickListener {
+
+    private static final int WRITE_PERMISSION_REQUEST = 1024;
+    final boolean debug = false;
 
     // Initialize variable
     Button btImport, btScan, btExport;
@@ -65,6 +72,15 @@ public class MainActivity extends AppCompatActivity implements RecyclerViewAdapt
     }
 
     private void exportButtonClickEvent() {
+        int checkPermissionsForWrite = ActivityCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE);
+
+        if (checkPermissionsForWrite == PackageManager.PERMISSION_GRANTED)
+            exportToExcel();
+        else
+            requestPermissions(new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, WRITE_PERMISSION_REQUEST);
+    }
+
+    private void exportToExcel() {
         // Set up the input
         final EditText input = new EditText(this);
         input.setInputType(InputType.TYPE_CLASS_TEXT);
@@ -84,36 +100,50 @@ public class MainActivity extends AppCompatActivity implements RecyclerViewAdapt
                 fileName + ".xls", listItems);
 
         String message = isExcelGenerated ? String.format(Locale.getDefault(), "Created Excel file with %d elements", listItems.size()) : "Failed to generate file";
+
         Toast.makeText(this, message, Toast.LENGTH_SHORT).show();
     }
 
     private void ScannerButtonClickEvent() {
-        //debug
-        /*listItems.add("" + listItems.size() + "");
-        adapter.notifyItemInserted(listItems.size() - 1);
+        if (debug) {
+            listItems.add("" + listItems.size() + "");
+            adapter.notifyItemInserted(listItems.size() - 1);
 
-        // after the first scan, update the view
-        if (listItems.size() == 1) {
-            findViewById(R.id.display_barcodes_recycler_view).setVisibility(View.VISIBLE);
-            btExport.setEnabled(true);
-            btScan.setText(R.string.button_secondClick);
-        }*/
+            // after the first scan, update the view
+            if (listItems.size() == 1) {
+                findViewById(R.id.display_barcodes_recycler_view).setVisibility(View.VISIBLE);
+                btExport.setEnabled(true);
+                btScan.setText(R.string.button_secondClick);
+            }
+        } else {
+            // Initialize intent integrator
+            IntentIntegrator intentIntegrator = new IntentIntegrator(
+                    MainActivity.this
+            );
 
-        // Initialize intent integrator
-        IntentIntegrator intentIntegrator = new IntentIntegrator(
-                MainActivity.this
-        );
+            // Set prompt text and beep
+            intentIntegrator.setPrompt("For flash use volume up key");
+            intentIntegrator.setBeepEnabled(true);
 
-        // Set prompt text and beep
-        intentIntegrator.setPrompt("For flash use volume up key");
-        intentIntegrator.setBeepEnabled(true);
+            // Locked orientation
+            intentIntegrator.setOrientationLocked(true);
 
-        // Locked orientation
-        intentIntegrator.setOrientationLocked(true);
+            // Set capture activity and initialize scan
+            intentIntegrator.setCaptureActivity(Capture.class);
+            intentIntegrator.initiateScan();
+        }
+    }
 
-        // Set capture activity and initialize scan
-        intentIntegrator.setCaptureActivity(Capture.class);
-        intentIntegrator.initiateScan();
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == WRITE_PERMISSION_REQUEST) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                exportToExcel();
+            } else {
+                Toast.makeText(this, "The app was not allowed to write in your storage", Toast.LENGTH_LONG).show();
+            }
+        }
     }
 
     @Override
@@ -164,10 +194,11 @@ public class MainActivity extends AppCompatActivity implements RecyclerViewAdapt
     }
 
     private boolean IsScanValidate(String scanResults) {
-        return scanResults != null &&
-                scanResults.matches("[0-9]+") &&
-                scanResults.length() == 7 &&
-                scanResults.charAt(0) == '3';
+        return debug ||
+                (scanResults != null &&
+                        scanResults.matches("[0-9]+") &&
+                        scanResults.length() == 7 &&
+                        scanResults.charAt(0) == '3');
     }
 
     private void AlertDialogBuilder(String title, String message, final DialogInterface.OnClickListener positiveClickEvent, boolean showNegativeButton) {
