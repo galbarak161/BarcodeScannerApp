@@ -23,6 +23,7 @@ import java.util.List;
 
 public class ExcelUtils {
     public static final String TAG = "ExcelUtil";
+
     private static Cell cell;
     private static Sheet sheet;
     private static Workbook workbook;
@@ -65,13 +66,14 @@ public class ExcelUtils {
         setHeaderCellStyle();
 
         // Creating a New Sheet and Setting width for each column
-        sheet = workbook.createSheet(Constants.EXCEL_SHEET_NAME);
+        String EXCEL_SHEET_NAME = "My Barcodes";
+        sheet = workbook.createSheet(EXCEL_SHEET_NAME);
         sheet.setColumnWidth(0, (15 * 400));
         sheet.setColumnWidth(1, (15 * 400));
 
         setHeaderRow();
         fillDataIntoExcel(dataList);
-        isWorkbookWrittenIntoStorage = storeExcelInStorage(context, fileName);
+        isWorkbookWrittenIntoStorage = storeExcelInStorage(context, fileName, false);
 
         return isWorkbookWrittenIntoStorage;
     }
@@ -142,10 +144,18 @@ public class ExcelUtils {
      * @param fileName - name of workbook which will be stored in device
      * @return boolean - returns state whether workbook is written into storage or not
      */
-    private static boolean storeExcelInStorage(Context context, String fileName) {
+    private static boolean storeExcelInStorage(Context context, String fileName, boolean retry) {
         boolean isSuccess;
 
-        File file = new File(context.getExternalFilesDir(null), fileName);
+        File file;
+
+        if (retry) {
+            file = new File(context.getExternalFilesDir(null), fileName);
+        } else {
+            File root = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS);
+            file = new File(root, fileName);
+        }
+
         FileOutputStream fileOutputStream = null;
 
         try {
@@ -154,7 +164,7 @@ public class ExcelUtils {
             Log.e(TAG, "Writing file" + file);
             isSuccess = true;
         } catch (IOException e) {
-            Log.e(TAG, "Error writing Exception: ", e);
+            Log.e(TAG, "Error writing Exception: " + e);
             isSuccess = false;
         } catch (Exception e) {
             Log.e(TAG, "Failed to save file due to Exception: ", e);
@@ -167,6 +177,11 @@ public class ExcelUtils {
             } catch (Exception ex) {
                 ex.printStackTrace();
             }
+        }
+
+        if (!isSuccess && !retry) {
+            Log.e(TAG, "Retry...");
+            isSuccess = storeExcelInStorage(context, fileName, true);
         }
 
         return isSuccess;

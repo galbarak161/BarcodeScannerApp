@@ -1,9 +1,7 @@
 package com.example.barcodescanner;
 
-import android.Manifest;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.text.InputType;
 import android.view.View;
@@ -15,7 +13,6 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.app.ActivityCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -27,13 +24,14 @@ import java.util.Locale;
 
 public class MainActivity extends AppCompatActivity implements RecyclerViewAdapter.ItemClickListener {
 
-    private static final int WRITE_PERMISSION_REQUEST = 1024;
+    private static final int CAMERA_REQUEST = 49374;
     final boolean debug = false;
 
     // Initialize variable
     Button btImport, btScan, btExport;
     ArrayList<String> listItems = new ArrayList<>();
     RecyclerViewAdapter adapter;
+    AndroidStoragePermission permissionHandler;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -52,6 +50,8 @@ public class MainActivity extends AppCompatActivity implements RecyclerViewAdapt
 
         btImport = findViewById(R.id.bt_import);
         btImport.setOnClickListener(view -> importButtonClickEvent());
+
+        permissionHandler = new AndroidStoragePermission(this);
 
     }
 
@@ -72,12 +72,10 @@ public class MainActivity extends AppCompatActivity implements RecyclerViewAdapt
     }
 
     private void exportButtonClickEvent() {
-        int checkPermissionsForWrite = ActivityCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE);
-
-        if (checkPermissionsForWrite == PackageManager.PERMISSION_GRANTED)
+        if (permissionHandler.hasStoragePermission())
             exportToExcel();
         else
-            requestPermissions(new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, WRITE_PERMISSION_REQUEST);
+            permissionHandler.requestStoragePermission();
     }
 
     private void exportToExcel() {
@@ -137,19 +135,20 @@ public class MainActivity extends AppCompatActivity implements RecyclerViewAdapt
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        if (requestCode == WRITE_PERMISSION_REQUEST) {
-            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                exportToExcel();
-            } else {
-                Toast.makeText(this, "The app was not allowed to write in your storage", Toast.LENGTH_LONG).show();
-            }
-        }
+        permissionHandler.OnRequestPermissionsResult(requestCode, permissions, grantResults);
     }
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == CAMERA_REQUEST) {
+            handleCameraActivity(requestCode, resultCode, data);
+        } else if (requestCode == permissionHandler.RequestForManageAllFiles) {
+            permissionHandler.onActivityResult(requestCode, resultCode, data);
+        }
+    }
 
+    private void handleCameraActivity(int requestCode, int resultCode, @Nullable Intent data) {
         // Initialize intent results
         IntentResult result = IntentIntegrator.parseActivityResult(
                 requestCode, resultCode, data
